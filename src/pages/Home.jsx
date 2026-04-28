@@ -40,7 +40,7 @@ function Home() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
             </span>
-            RapidTaskers v3.0 Is Live
+            Best Task Stop
           </div>
 
           <h1 className="text-5xl md:text-7xl font-bold text-gray-900 dark:text-white tracking-tight mb-6">
@@ -88,9 +88,9 @@ function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
             {[
-              { label: 'Total Users', val: '45,000+', icon: <Users className="text-indigo-600 dark:text-indigo-400" size={24} /> },
-              { label: 'Tasks Completed', val: '1.2M+', icon: <CheckCircle className="text-indigo-600 dark:text-indigo-400" size={24} /> },
-              { label: 'Avg. Payout Time', val: '2.5 Hours', icon: <Clock className="text-indigo-600 dark:text-indigo-400" size={24} /> }
+              { label: 'Total Users', val: '1,000+', icon: <Users className="text-indigo-600 dark:text-indigo-400" size={24} /> },
+              { label: 'Tasks Completed', val: '10K+', icon: <CheckCircle className="text-indigo-600 dark:text-indigo-400" size={24} /> },
+              { label: 'Avg. Payout Time', val: '2 Weeks', icon: <Clock className="text-indigo-600 dark:text-indigo-400" size={24} /> }
             ].map((stat, i) => (
               <div key={i} className="group hover:-translate-y-1 transition-transform duration-300">
                 <div className="w-14 h-14 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center justify-center mx-auto mb-4 group-hover:border-indigo-500/50 transition-colors">
@@ -149,7 +149,7 @@ function Home() {
 
               <div className="space-y-4">
                 {[
-                  { title: 'Fast Payouts', desc: 'Withdraw to your local bank or crypto wallet with industry-leading speed.', icon: <Zap className="text-indigo-600" size={20} /> },
+                  { title: 'Fast Payouts', desc: 'Withdraw to your M-Pesa or crypto wallet with industry-leading speed.', icon: <Zap className="text-indigo-600" size={20} /> },
                   { title: 'Verified Tasks', desc: 'Say goodbye to scams. Every task is pre-funded and strictly vetted.', icon: <ShieldCheck className="text-indigo-600" size={20} /> },
                   { title: 'Easy to Use', desc: 'Our intuitive dashboard makes managing tasks and earnings a breeze.', icon: <Rocket className="text-indigo-600" size={20} /> },
                   { title: 'Global Access', desc: 'Work from anywhere in the world. No geographical restrictions.', icon: <Globe className="text-indigo-600" size={20} /> },
@@ -180,7 +180,7 @@ function Home() {
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-sm text-gray-400 mb-1">Available Balance</div>
-                      <div className="text-3xl font-bold">$1,240.50</div>
+                      <div className="text-3xl font-bold">$240.50</div>
                     </div>
                     <div className="w-12 h-12 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center">
                        <DollarSign size={24} />
@@ -189,16 +189,16 @@ function Home() {
                   <div className="h-px bg-gray-800 w-full"></div>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center text-sm">
-                       <span className="text-gray-400">Website Testing</span>
-                       <span className="text-green-400">+$25.00</span>
+                       <span className="text-gray-400">150 words Discussion Post</span>
+                       <span className="text-green-400">+$1.00</span>
                     </div>
                     <div className="flex justify-between items-center text-sm">
-                       <span className="text-gray-400">App Review</span>
+                       <span className="text-gray-400">Power Slides</span>
                        <span className="text-green-400">+$15.00</span>
                     </div>
                     <div className="flex justify-between items-center text-sm">
-                       <span className="text-gray-400">Data Entry</span>
-                       <span className="text-green-400">+$40.00</span>
+                       <span className="text-gray-400">AI Removal</span>
+                       <span className="text-green-400">+$0.50</span>
                     </div>
                   </div>
                 </div>
