@@ -23,12 +23,12 @@ function Home() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-bold text-gray-900 dark:text-white tracking-tight mb-6">
-            The modern way to <br className="hidden md:block" />
-            <span className="text-indigo-600 dark:text-indigo-500">manage tasks.</span>
+            Earn Money Online by Completing Simple, <br className="hidden md:block" />
+            <span className="text-indigo-600 dark:text-indigo-500">High-Paying Tasks.</span>
           </h1>
 
           <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10">
-            Join a global network of professionals. RapidTaskers connects you with high-value assignments through a secure, institutional-grade platform.
+            Join thousands of verified taskers earning daily. No Hidden charges — just your skills and consistency.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -39,10 +39,10 @@ function Home() {
             ) : (
               <>
                 <Button as={Link} to="/signup" size="lg" className="w-full sm:w-auto flex items-center justify-center gap-2">
-                  Get Started <ArrowRight size={20} />
+                  Start Earning Now <ArrowRight size={20} />
                 </Button>
                 <Button as={Link} to="/login" variant="outline" size="lg" className="w-full sm:w-auto flex items-center justify-center">
-                  Agent Login
+                  Tasker Login
                 </Button>
               </>
             )}
@@ -61,9 +61,9 @@ function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
             {[
-              { label: 'Total Volume', val: '$24.8M', icon: <Zap className="text-indigo-600 dark:text-indigo-400" /> },
-              { label: 'Global Agents', val: '62,000+', icon: <Globe className="text-indigo-600 dark:text-indigo-400" /> },
-              { label: 'Avg. Settlement', val: '< 15m', icon: <Clock className="text-indigo-600 dark:text-indigo-400" /> }
+              { label: 'Tasks', val: 'Rapid', icon: <Zap className="text-indigo-600 dark:text-indigo-400" /> },
+              { label: 'Global', val: 'clients', icon: <Globe className="text-indigo-600 dark:text-indigo-400" /> },
+              { label: 'Task Completion', val: '+ 10k', icon: <Clock className="text-indigo-600 dark:text-indigo-400" /> }
             ].map((stat, i) => (
               <div key={i}>
                 <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center justify-center mx-auto mb-4">
@@ -84,16 +84,16 @@ function Home() {
             <div className="lg:w-1/2 space-y-10">
               <div>
                 <h2 className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight mb-4">
-                  Engineered for Global Performance
+                  Why Taskers Love RapidTaskers
                 </h2>
                 <p className="text-lg text-gray-600 dark:text-gray-400">
-                  We've built a platform that respects your time and rewards your expertise. No filler, only high-value professional assignments.
+                  We connect you to real tasks that pay. No spam, no wasted time — just simple work and real earnings.
                 </p>
               </div>
 
               <div className="space-y-6">
                 {[
-                  { title: 'Real-time Settlements', desc: 'Withdraw your earnings instantly through our secure automated clearing house.', icon: <CheckCircle className="text-indigo-600" size={24} /> },
+                  { title: 'Create Your Account', desc: 'Sign up and complete a quick verification.', icon: <CheckCircle className="text-indigo-600" size={24} /> },
                   { title: 'Institutional Safety', desc: 'A legally vetted framework that protects both agents and corporate partners.', icon: <ShieldCheck className="text-indigo-600" size={24} /> }
                 ].map((item, i) => (
                   <div key={i} className="flex gap-4 p-6 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800">
