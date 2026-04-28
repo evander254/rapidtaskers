@@ -59,7 +59,7 @@ function App() {
       <Router>
         <Routes>
           {/* Public Routes */}
-          <Route path="/" element={<><Navbar /><div className="pt-14"><Home /></div></>} />
+          <Route path="/" element={!user ? <><Navbar /><div className="pt-14"><Home /></div></> : <Navigate to="/dashboard" />} />
           <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
           <Route path="/signup" element={!user ? <Signup /> : <Navigate to="/dashboard" />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
