@@ -217,9 +217,9 @@ function Home() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                {[
-                  { name: "Sarah Jenkins", country: "United States", text: "RapidTaskers completely changed how I earn on the side. The interface is clean, and the payouts hit my account instantly. Highly recommend!" },
-                  { name: "Ahmed Yasin", country: "Egypt", text: "I've tried many task sites, but this one actually has verified tasks that pay fairly. It's a reliable source of income for me now." },
-                  { name: "Maria Garcia", country: "Spain", text: "The dashboard is beautiful and the tasks are very straightforward. I made my first $50 within 2 hours of signing up." }
+                  { name: "Sarah Otsieno", country: "Kenya", text: "RapidTaskers completely changed how I earn on the side. The interface is clean, and the payouts hit my account. Highly recommend!" },
+                  { name: "Ahmed Yasin", country: "Kenya", text: "I've tried many local task sites, but this one actually has verified tasks that pay fairly. It's a reliable source of income for me now." },
+                  { name: "Duncan Ochieng", country: "Kenya", text: "The dashboard is beautiful and the tasks are very straightforward. I made my first $50 within 2 days of signing up." }
                ].map((review, i) => (
                   <div key={i} className="p-8 rounded-3xl bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 relative">
                      <Quote className="text-indigo-200 dark:text-indigo-900/50 absolute top-6 right-6" size={48} />
