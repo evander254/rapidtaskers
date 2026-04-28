@@ -11,7 +11,7 @@ function Home() {
   const faqs = [
     {
       q: "How do I get paid?",
-      a: "Payments are processed instantly to your RapidTaskers wallet once a task is approved. You can withdraw to your bank or crypto wallet anytime."
+      a: "Payments are processed apon approval to your RapidTaskers wallet once a task is approved. You can withdraw to your Mpesa or crypto wallet."
     },
     {
       q: "Are tasks verified?",
