@@ -4,7 +4,8 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useToast } from '../components/Toast';
 import { 
   Users, PlusCircle, CreditCard, CheckCircle, XCircle, 
-  UserCheck, History, ArrowRight, Zap, Gavel, DollarSign, Clock
+  UserCheck, History, ArrowRight, Zap, Gavel, DollarSign, Clock,
+  LayoutDashboard, Activity, FileText
 } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -13,7 +14,7 @@ import Badge from '../components/ui/Badge';
 function AdminPanel() {
   const { profile } = useAuthStore();
   const toast = useToast();
-  const [tab, setTab] = useState('users');
+  const [tab, setTab] = useState('overview');
   const [pendingUsers, setPendingUsers] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
   const [newTask, setNewTask] = useState({ 
@@ -28,10 +29,12 @@ function AdminPanel() {
   const [selectedTaskBids, setSelectedTaskBids] = useState(null);
   const [loadingBids, setLoadingBids] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [overviewStats, setOverviewStats] = useState({ taskers: 0, totalTasks: 0, assignedTasks: 0 });
 
   useEffect(() => {
     const loadData = async () => {
       setIsInitialLoading(true);
+      if (tab === 'overview') await fetchOverviewStats();
       if (tab === 'users') await fetchPendingUsers();
       if (tab === 'withdrawals') await fetchPendingWithdrawals();
       if (tab === 'management' || tab === 'tasks') await fetchAdminTasks();
@@ -39,6 +42,35 @@ function AdminPanel() {
     };
     loadData();
   }, [tab]);
+
+  const fetchOverviewStats = async () => {
+    try {
+      // Fetch taskers count
+      const { count: taskerCount } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('role', 'tasker');
+
+      // Fetch total tasks count
+      const { count: totalTasks } = await supabase
+        .from('tasks')
+        .select('*', { count: 'exact', head: true });
+
+      // Fetch assigned/completed tasks count
+      const { count: assignedTasks } = await supabase
+        .from('tasks')
+        .select('*', { count: 'exact', head: true })
+        .in('status', ['assigned', 'completed', 'correction', 'awaiting_review']);
+
+      setOverviewStats({
+        taskers: taskerCount || 0,
+        totalTasks: totalTasks || 0,
+        assignedTasks: assignedTasks || 0
+      });
+    } catch (err) {
+      console.error('Error fetching overview stats:', err);
+    }
+  };
 
   const fetchAdminTasks = async () => {
     try {
@@ -233,6 +265,7 @@ function AdminPanel() {
   };
 
   const tabs = [
+    { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={16} /> },
     { id: 'users', label: 'Freelancers', icon: <Users size={16} /> },
     { id: 'tasks', label: 'Post Project', icon: <PlusCircle size={16} /> },
     { id: 'management', label: 'Projects', icon: <Zap size={16} /> },
@@ -274,6 +307,78 @@ function AdminPanel() {
           </button>
         ))}
       </div>
+
+      {/* Overview Tab */}
+      {tab === 'overview' && (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="p-6 border-l-4 border-l-indigo-500">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Taskers</p>
+                  <h3 className="text-3xl font-bold text-gray-900 dark:text-white mt-2">{overviewStats.taskers}</h3>
+                </div>
+                <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                  <Users size={24} />
+                </div>
+              </div>
+              <div className="mt-4 flex items-center text-sm">
+                <span className="text-gray-500">Registered platform workers</span>
+              </div>
+            </Card>
+
+            <Card className="p-6 border-l-4 border-l-emerald-500">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Projects</p>
+                  <h3 className="text-3xl font-bold text-gray-900 dark:text-white mt-2">{overviewStats.totalTasks}</h3>
+                </div>
+                <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                  <FileText size={24} />
+                </div>
+              </div>
+              <div className="mt-4 flex items-center text-sm">
+                <span className="text-gray-500">All tasks created</span>
+              </div>
+            </Card>
+
+            <Card className="p-6 border-l-4 border-l-amber-500">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Active / Assigned</p>
+                  <h3 className="text-3xl font-bold text-gray-900 dark:text-white mt-2">{overviewStats.assignedTasks}</h3>
+                </div>
+                <div className="w-12 h-12 bg-amber-50 dark:bg-amber-900/30 rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-400">
+                  <Activity size={24} />
+                </div>
+              </div>
+              <div className="mt-4 flex items-center text-sm">
+                <span className="text-gray-500">Tasks currently being worked on</span>
+              </div>
+            </Card>
+          </div>
+
+          <Card className="p-8 mt-6 border border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
+             <div className="flex flex-col items-center justify-center text-center py-8">
+               <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-4 shadow-inner">
+                 <LayoutDashboard size={32} />
+               </div>
+               <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Platform Administration</h3>
+               <p className="text-gray-500 mt-2 max-w-lg">
+                 Use the navigation tabs above to manage freelancers, post new projects, review deliverables, and process payments.
+               </p>
+               <div className="flex gap-4 mt-8">
+                 <Button onClick={() => setTab('users')} variant="outline" className="flex items-center gap-2">
+                   Review Freelancers
+                 </Button>
+                 <Button onClick={() => setTab('tasks')} className="flex items-center gap-2">
+                   <PlusCircle size={18} /> Post New Task
+                 </Button>
+               </div>
+             </div>
+          </Card>
+        </div>
+      )}
 
       {/* Users Tab */}
       {tab === 'users' && (

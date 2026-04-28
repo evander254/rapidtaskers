@@ -67,7 +67,7 @@ function App() {
 
           {/* Protected Routes with Sidebar */}
           <Route element={<MainLayout />}>
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard" element={profile?.role === 'admin' ? <Navigate to="/admin" replace /> : <Dashboard />} />
             <Route path="/tasks" element={profile?.status === 'approved' ? <Tasks /> : <Navigate to="/dashboard" />} />
             <Route path="/my-tasks" element={<MyTasks />} />
             <Route path="/wallet" element={<Wallet />} />
