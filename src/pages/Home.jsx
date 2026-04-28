@@ -94,7 +94,9 @@ function Home() {
               <div className="space-y-6">
                 {[
                   { title: 'Create Your Account', desc: 'Sign up and complete a quick verification.', icon: <CheckCircle className="text-indigo-600" size={24} /> },
-                  { title: 'Institutional Safety', desc: 'A legally vetted framework that protects both agents and corporate partners.', icon: <ShieldCheck className="text-indigo-600" size={24} /> }
+                  { title: 'Pick a Task', desc: 'Browse available tasks and start instantly.', icon: <CheckCircle className="text-indigo-600" size={24} /> },
+                  { title: 'Complete Work', desc: 'Submit your task and wait for approval.', icon: <CheckCircle className="text-indigo-600" size={24} /> },
+                  { title: 'Get Paid', desc: 'Receive your money directly to your wallet.', icon: <CheckCircle className="text-indigo-600" size={24} /> },
                 ].map((item, i) => (
                   <div key={i} className="flex gap-4 p-6 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800">
                     <div className="shrink-0 pt-1">{item.icon}</div>
@@ -115,7 +117,7 @@ function Home() {
                     <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
                     <div className="w-3 h-3 rounded-full bg-green-500"></div>
                   </div>
-                  <div className="text-xs font-medium text-gray-400 uppercase tracking-wider">Protocol Interface</div>
+                  <div className="text-xs font-medium text-gray-400 uppercase tracking-wider">RapidTaskers Home</div>
                 </div>
                 <div className="space-y-6">
                   <div className="h-4 w-2/3 bg-gray-800 rounded"></div>
@@ -123,8 +125,8 @@ function Home() {
                   <div className="h-4 w-3/4 bg-gray-800 rounded"></div>
                   <div className="grid grid-cols-2 gap-4 pt-8">
                     <div className="bg-indigo-600 rounded-2xl p-5 flex flex-col justify-between h-32">
-                      <div className="text-xs font-medium text-indigo-200 uppercase tracking-wider">Yield</div>
-                      <div className="text-2xl font-bold">$2,480.00</div>
+                      <div className="text-xs font-medium text-indigo-200 uppercase tracking-wider">Earnings</div>
+                      <div className="text-2xl font-bold">$200.00</div>
                     </div>
                     <div className="bg-gray-800 rounded-2xl p-5 flex flex-col justify-between h-32">
                       <div className="text-xs font-medium text-gray-400 uppercase tracking-wider">Status</div>
@@ -144,8 +146,8 @@ function Home() {
       <section className="py-24 bg-gray-50 dark:bg-gray-900/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Start Your Career</h2>
-            <p className="text-gray-600 dark:text-gray-400">Simple four-step process to professional freedom.</p>
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Start Earning Today — Don’t Miss Out</h2>
+            <p className="text-gray-600 dark:text-gray-400">Join thousands already making money daily on RapidTaskers.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
@@ -172,14 +174,14 @@ function Home() {
           <div className="bg-indigo-600 rounded-3xl p-12 md:p-20 text-center relative overflow-hidden shadow-xl">
             <div className="relative z-10 space-y-8">
               <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
-                Secure Your Place In The Future
+                Start Earning Today
               </h2>
               <p className="text-indigo-100 text-lg max-w-2xl mx-auto">
-                Join 60,000+ digital professionals today. RapidTaskers is the industry standard for specialized digital labor.
+                Join thousands of digital professionals today. RapidTaskers is the first stop for your freelance journey.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                 <Button as={Link} to="/signup" className="bg-white text-indigo-600 hover:bg-gray-50 flex items-center justify-center">
-                  Create Account
+                  Create Free Account
                 </Button>
                 <Button as={Link} to="/tasks" className="bg-indigo-700 hover:bg-indigo-800 text-white flex items-center justify-center">
                   Browse Assignments
