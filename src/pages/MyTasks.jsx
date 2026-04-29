@@ -40,29 +40,19 @@ function MyTasks() {
       query = query.eq('status', 'rejected');
     }
     
-    const { data, error } = await query.order('updated_at', { ascending: false });
+    const { data, error } = await query.order('created_at', { ascending: false });
     if (!error && data) setTasks(data);
     setLoading(false);
   };
 
-  const handleSubmitWork = async (taskId, reward) => {
+  const handleSubmitWork = async (taskId) => {
     try {
-      // 1. Update task status
-      const { error: taskError } = await supabase
-        .from('tasks')
-        .update({ status: 'awaiting_review' })
-        .eq('id', taskId);
-      
-      if (taskError) throw taskError;
+      const { error } = await supabase.rpc('submit_task', {
+        p_task_id: taskId,
+        p_user_id: profile.id
+      });
 
-      // 2. Update pending balance
-      const { data: p } = await supabase.from('profiles').select('balance_pending').eq('id', profile.id).single();
-      const { error: balError } = await supabase
-        .from('profiles')
-        .update({ balance_pending: (p.balance_pending || 0) + reward })
-        .eq('id', profile.id);
-
-      if (balError) throw balError;
+      if (error) throw error;
 
       toast.success('Project submitted for review. Assets held in escrow.', 'Success');
       fetchMyTasks();
@@ -181,7 +171,7 @@ function MyTasks() {
                   {(task.status === 'assigned' || task.status === 'correction') && (
                     <Button 
                       onClick={() => {
-                        handleSubmitWork(task.id, task.reward);
+                        handleSubmitWork(task.id);
                         setSelectedTask(null);
                       }}
                       className="w-full md:w-auto flex items-center justify-center gap-2 bg-indigo-600"
@@ -235,6 +225,17 @@ function MyTasks() {
             </div>
 
             <div className="space-y-4">
+              {selectedTask.status === 'correction' && selectedTask.admin_feedback && (
+                <div className="mb-4 bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-100 dark:border-red-900/30">
+                  <h4 className="font-semibold text-red-900 dark:text-red-400 flex items-center gap-2 text-xs uppercase tracking-wider mb-2">
+                    <AlertCircle size={14} /> Admin Revision Feedback
+                  </h4>
+                  <p className="text-sm text-red-700 dark:text-red-300">
+                    {selectedTask.admin_feedback}
+                  </p>
+                </div>
+              )}
+
               <h4 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2 uppercase tracking-wider text-xs opacity-70">
                 Project Instructions
               </h4>
@@ -270,7 +271,7 @@ function MyTasks() {
                 </div>
                 <Button 
                   onClick={() => {
-                    handleSubmitWork(selectedTask.id, selectedTask.reward);
+                    handleSubmitWork(selectedTask.id);
                     setSelectedTask(null);
                   }} 
                   className="w-full py-4 text-lg flex items-center justify-center gap-2"

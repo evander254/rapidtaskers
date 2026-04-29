@@ -85,13 +85,13 @@ function Tasks() {
       toast.error('Authorization Required', 'Your account must be approved before accepting projects.');
       return;
     }
-    const { error: claimError } = await supabase.from('task_claims').insert({
-      task_id: taskId, user_id: profile.id
+    const { error } = await supabase.rpc('accept_task', {
+      p_task_id: taskId,
+      p_user_id: profile.id
     });
-    if (claimError) {
-      toast.error(claimError.message, 'Protocol Denial');
+    if (error) {
+      toast.error(error.message, 'Protocol Denial');
     } else {
-      await supabase.from('tasks').update({ status: 'assigned', assigned_to: profile.id }).eq('id', taskId);
       toast.success('Project Accepted', 'The task has been added to your workspace.');
       setSelectedTask(null);
       fetchTasks();

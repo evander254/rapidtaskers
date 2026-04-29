@@ -34,7 +34,7 @@ function Wallet() {
   const fetchTransactions = async () => {
     setLoading(true);
     const { data } = await supabase
-      .from('withdrawals')
+      .from('transactions')
       .select('*')
       .eq('user_id', profile.id)
       .order('created_at', { ascending: false });
@@ -56,27 +56,14 @@ function Wallet() {
     }
 
     try {
-      // 1. Deduct balance immediately (Atomic-ish)
-      const { error: balError } = await supabase
-        .from('profiles')
-        .update({ balance_available: profile.balance_available - val })
-        .eq('id', profile.id);
-
-      if (balError) throw balError;
-
-      // 2. Create withdrawal record
-      const { error: txError } = await supabase.from('withdrawals').insert({
-        user_id: profile.id,
-        amount: val,
-        method: method,
-        status: 'pending'
+      // Use atomic RPC for withdrawal
+      const { error } = await supabase.rpc('request_withdrawal', {
+        p_user_id: profile.id,
+        p_amount: val,
+        p_method: method
       });
 
-      if (txError) {
-        // Rollback balance if TX fails
-        await supabase.from('profiles').update({ balance_available: profile.balance_available }).eq('id', profile.id);
-        throw txError;
-      }
+      if (error) throw error;
 
       toast.success('Liquidation Initialized', 'Your assets have been moved to escrow for processing.');
       setAmount('');
@@ -160,7 +147,7 @@ function Wallet() {
                   <tr className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800">
                     <th className="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">TX Identifier</th>
                     <th className="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
-                    <th className="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Destination</th>
+                    <th className="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Type / Category</th>
                     <th className="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Volume</th>
                     <th className="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">Status</th>
                   </tr>
@@ -186,8 +173,10 @@ function Wallet() {
                       <tr key={tx.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
                         <td className="px-6 py-4 font-mono text-xs text-gray-500">TX-{tx.id.slice(0, 8).toUpperCase()}</td>
                         <td className="px-6 py-4 text-sm text-gray-500">{new Date(tx.created_at).toLocaleDateString()}</td>
-                        <td className="px-6 py-4 text-sm text-gray-900 dark:text-white font-medium">{tx.method}</td>
-                        <td className="px-6 py-4 font-bold text-gray-900 dark:text-white">${tx.amount.toFixed(2)}</td>
+                        <td className="px-6 py-4 text-sm text-gray-900 dark:text-white font-medium capitalize">{tx.category?.replace('_', ' ') || 'Transfer'}</td>
+                        <td className={`px-6 py-4 font-bold ${tx.type === 'credit' ? 'text-green-600 dark:text-green-500' : 'text-gray-900 dark:text-white'}`}>
+                          {tx.type === 'credit' ? '+' : '-'}${tx.amount.toFixed(2)}
+                        </td>
                         <td className="px-6 py-4 text-right">
                           <Badge variant={
                             tx.status === 'completed' ? 'success' :

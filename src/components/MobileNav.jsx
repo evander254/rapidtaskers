@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Briefcase, Wallet, ShieldCheck, User } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Wallet, ShieldCheck, User, MessageSquare } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 
 function MobileNav() {
@@ -8,6 +8,7 @@ function MobileNav() {
   const navItems = [
     { name: 'Home', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
     { name: 'Tasks', icon: <Briefcase size={20} />, path: '/tasks' },
+    { name: 'Messages', icon: <MessageSquare size={20} />, path: '/messages' },
     { name: 'Wallet', icon: <Wallet size={20} />, path: '/wallet' },
     ...(profile?.role === 'admin' 
       ? [{ name: 'Client', icon: <ShieldCheck size={20} />, path: '/admin' }] 

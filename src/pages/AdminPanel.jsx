@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { useAuthStore } from '../store/useAuthStore';
 import { useToast } from '../components/Toast';
 import { 
   Users, PlusCircle, CreditCard, CheckCircle, XCircle, 
   UserCheck, History, ArrowRight, Zap, Gavel, DollarSign, Clock,
-  LayoutDashboard, Activity, FileText
+  LayoutDashboard, Activity, FileText, AlertCircle, MessageSquare,
+  Bell, Settings, List, UserPlus, Send, Plus, Inbox, Shield, Globe, Lock, MoreHorizontal
 } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -14,8 +16,16 @@ import Badge from '../components/ui/Badge';
 function AdminPanel() {
   const { profile } = useAuthStore();
   const toast = useToast();
-  const [tab, setTab] = useState('overview');
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get('tab') || 'overview';
+  
+  const setTab = (newTab) => {
+    setSearchParams({ tab: newTab });
+  };
+
   const [pendingUsers, setPendingUsers] = useState([]);
+  const [suspiciousUsers, setSuspiciousUsers] = useState(new Set());
   const [withdrawals, setWithdrawals] = useState([]);
   const [newTask, setNewTask] = useState({ 
     title: '', description: '', type: 'auto', 
@@ -35,7 +45,10 @@ function AdminPanel() {
     const loadData = async () => {
       setIsInitialLoading(true);
       if (tab === 'overview') await fetchOverviewStats();
-      if (tab === 'users') await fetchPendingUsers();
+      if (tab === 'users') {
+        await fetchPendingUsers();
+        await fetchSuspiciousLogins();
+      }
       if (tab === 'withdrawals') await fetchPendingWithdrawals();
       if (tab === 'management' || tab === 'tasks') await fetchAdminTasks();
       setIsInitialLoading(false);
@@ -116,6 +129,26 @@ function AdminPanel() {
     if (data) setPendingUsers(data);
   };
 
+  const fetchSuspiciousLogins = async () => {
+    const { data } = await supabase.from('login_logs').select('user_id, device_fingerprint');
+    if (!data) return;
+    
+    const fpMap = {};
+    data.forEach(log => {
+      if (!log.device_fingerprint) return;
+      if (!fpMap[log.device_fingerprint]) fpMap[log.device_fingerprint] = new Set();
+      fpMap[log.device_fingerprint].add(log.user_id);
+    });
+
+    const suspiciousIds = new Set();
+    Object.values(fpMap).forEach(users => {
+      if (users.size > 1) {
+        users.forEach(id => suspiciousIds.add(id));
+      }
+    });
+    setSuspiciousUsers(suspiciousIds);
+  };
+
   const fetchPendingWithdrawals = async () => {
     const { data } = await supabase.from('withdrawals').select('*, profiles(full_name)').eq('status', 'pending');
     if (data) setWithdrawals(data);
@@ -127,18 +160,13 @@ function AdminPanel() {
     else { toast.success(`User has been ${status}.`, 'Success'); fetchPendingUsers(); }
   };
 
-  const processWithdrawal = async (txId, status, userId, amount) => {
+  const processWithdrawal = async (txId, status) => {
     try {
-      if (status === 'completed') {
-        // Balance already deducted on request in Wallet.jsx (Wait, I'll update Wallet.jsx next)
-        // So here we just update the status
-      } else if (status === 'failed') {
-        // Refund the balance
-        const { data: p } = await supabase.from('profiles').select('balance_available').eq('id', userId).single();
-        await supabase.from('profiles').update({ balance_available: (p.balance_available || 0) + amount }).eq('id', userId);
-      }
-      
-      await supabase.from('withdrawals').update({ status }).eq('id', txId);
+      const { error } = await supabase.rpc('process_withdrawal', {
+        p_withdrawal_id: txId,
+        p_status: status
+      });
+      if (error) throw error;
       toast.success(`Withdrawal ${status}.`, 'Success');
       fetchPendingWithdrawals();
     } catch (err) {
@@ -148,34 +176,8 @@ function AdminPanel() {
 
   const handleApproveTask = async (task) => {
     try {
-      // 1. Update task status
-      const { error: taskError } = await supabase
-        .from('tasks')
-        .update({ status: 'completed' })
-        .eq('id', task.id);
-      
-      if (taskError) throw taskError;
-
-      // 2. Get current balance
-      const { data: p, error: pError } = await supabase
-        .from('profiles')
-        .select('balance_available, balance_pending')
-        .eq('id', task.assigned_to)
-        .single();
-      
-      if (pError) throw pError;
-
-      // 3. Update balances (Move from pending to available)
-      const { error: balError } = await supabase
-        .from('profiles')
-        .update({ 
-          balance_available: (p.balance_available || 0) + task.reward,
-          balance_pending: Math.max(0, (p.balance_pending || 0) - task.reward)
-        })
-        .eq('id', task.assigned_to);
-
-      if (balError) throw balError;
-
+      const { error } = await supabase.rpc('approve_task', { p_task_id: task.id });
+      if (error) throw error;
       toast.success('Project approved and payment released.', 'Success');
       fetchAdminTasks();
     } catch (err) {
@@ -184,16 +186,15 @@ function AdminPanel() {
   };
 
   const handleRejectTask = async (task) => {
+    const feedback = window.prompt("Please provide feedback for the required revision:");
+    if (!feedback) return; // Cancelled
+    
     try {
-      // 1. Update task status to revision
-      await supabase.from('tasks').update({ status: 'correction' }).eq('id', task.id);
-
-      // 2. Clear pending balance
-      const { data: p } = await supabase.from('profiles').select('balance_pending').eq('id', task.assigned_to).single();
-      await supabase.from('profiles').update({ 
-        balance_pending: Math.max(0, (p.balance_pending || 0) - task.reward) 
-      }).eq('id', task.assigned_to);
-
+      const { error } = await supabase.rpc('reject_task', { 
+        p_task_id: task.id, 
+        p_feedback: feedback 
+      });
+      if (error) throw error;
       toast.success('Project sent back for revision.', 'Revision Requested');
       fetchAdminTasks();
     } catch (err) {
@@ -276,7 +277,7 @@ function AdminPanel() {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
         <div className="w-10 h-10 border-3 border-indigo-600/20 border-t-indigo-600 rounded-full animate-spin"></div>
-        <p className="text-sm text-gray-500 font-medium animate-pulse">Synchronizing Data...</p>
+        <p className="text-sm text-gray-500 font-medium animate-pulse">Loading...</p>
       </div>
     );
   }
@@ -398,11 +399,25 @@ function AdminPanel() {
                       {user.full_name.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <h4 className="font-semibold text-gray-900 dark:text-white truncate">{user.full_name}</h4>
+                      <h4 className="font-semibold text-gray-900 dark:text-white truncate flex items-center gap-2">
+                        {user.full_name}
+                        {suspiciousUsers.has(user.id) && (
+                          <Badge variant="danger" className="text-[10px] py-0 px-1.5 flex items-center gap-1" title="Multiple accounts detected on same device">
+                            <AlertCircle size={10} /> Suspicious
+                          </Badge>
+                        )}
+                      </h4>
                       <p className="text-xs text-gray-500 mt-0.5">{new Date(user.created_at).toLocaleDateString()}</p>
                     </div>
                   </div>
-                  <div className="flex gap-3 mt-auto">
+                  <div className="flex gap-2 mt-auto">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => navigate(`/messages?userId=${user.id}`)}
+                      className="px-3"
+                    >
+                      <MessageSquare size={16} />
+                    </Button>
                     <Button variant="outline" onClick={() => updateUserStatus(user.id, 'rejected')} className="flex-1 text-red-600 hover:text-red-700 dark:text-red-400">
                       Decline
                     </Button>
@@ -681,11 +696,20 @@ function AdminPanel() {
                     </div>
                     
                     {task.assigned_to && (
-                      <div className="mt-4 flex items-center gap-2 text-xs text-gray-500">
-                        <UserCheck size={14} className="text-indigo-500" />
-                        <span>Assigned to: <strong>{task.profiles?.full_name || 'Freelancer'}</strong></span>
-                        <span className="mx-2">•</span>
-                        <span>Status: <strong className="capitalize">{task.status.replace('_', ' ')}</strong></span>
+                      <div className="mt-4 flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <UserCheck size={14} className="text-indigo-500" />
+                          <span>Assigned to: <strong>{task.profiles?.full_name || 'Freelancer'}</strong></span>
+                          <span className="mx-2">•</span>
+                          <span>Status: <strong className="capitalize">{task.status.replace('_', ' ')}</strong></span>
+                        </div>
+                        <button 
+                          onClick={() => navigate(`/messages?userId=${task.assigned_to}`)}
+                          className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg text-[10px] font-bold hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors uppercase tracking-wider"
+                        >
+                          <MessageSquare size={12} />
+                          Chat
+                        </button>
                       </div>
                     )}
 
@@ -713,9 +737,19 @@ function AdminPanel() {
                                   </div>
                                   <p className="text-sm text-gray-500 mt-1 truncate">{bid.message}</p>
                                 </div>
-                                <Button size="sm" onClick={() => handleAcceptBid(bid.id, task.id, bid.user_id)}>
-                                  Accept
-                                </Button>
+                                <div className="flex gap-2 shrink-0">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => navigate(`/messages?userId=${bid.user_id}`)}
+                                    className="px-3"
+                                  >
+                                    <MessageSquare size={14} />
+                                  </Button>
+                                  <Button size="sm" onClick={() => handleAcceptBid(bid.id, task.id, bid.user_id)}>
+                                    Accept
+                                  </Button>
+                                </div>
                               </div>
                             ))}
                           </div>
@@ -764,31 +798,30 @@ function AdminPanel() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                            <div className="w-8 h-8 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center text-gray-900 dark:text-white font-bold text-xs shrink-0">
-                            {tx.profiles?.full_name.charAt(0).toUpperCase()}
+                            {tx.profiles?.full_name?.charAt(0).toUpperCase()}
                           </div>
                           <span className="font-medium text-gray-900 dark:text-white text-sm">{tx.profiles?.full_name}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 font-bold text-green-600 dark:text-green-500">${tx.amount.toFixed(2)}</td>
-                      <td className="px-6 py-4">
-                        <Badge variant="primary">{tx.method}</Badge>
-                      </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 text-sm text-gray-500">{tx.payout_method || 'Bank Transfer'}</td>
+                      <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
-                          <button 
-                            onClick={() => processWithdrawal(tx.id, 'failed', tx.user_id, tx.amount)} 
-                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                            title="Decline"
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => processWithdrawal(tx.id, 'rejected')}
+                            className="text-red-600 hover:bg-red-50"
                           >
-                            <XCircle size={20} />
-                          </button>
-                          <button 
-                            onClick={() => processWithdrawal(tx.id, 'completed', tx.user_id, tx.amount)} 
-                            className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors"
-                            title="Authorize"
+                            Reject
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            onClick={() => processWithdrawal(tx.id, 'completed')}
+                            className="bg-green-600 hover:bg-green-700"
                           >
-                            <CheckCircle size={20} />
-                          </button>
+                            Approve
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -796,6 +829,55 @@ function AdminPanel() {
                 )}
               </tbody>
             </table>
+          </div>
+        </Card>
+      )}
+
+      {/* Messages Section */}
+      {tab.startsWith('messages') && (
+        <Card className="p-12 text-center border-dashed">
+          <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 mx-auto mb-4">
+            <MessageSquare size={32} />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Admin Communications</h3>
+          <p className="text-gray-500 mt-2 max-w-md mx-auto">
+            {tab === 'messages_inbox' ? "Your inbox is currently empty. All tasker communications will appear here." : "Start a new conversation with a tasker by selecting their profile."}
+          </p>
+          <Button className="mt-6" onClick={() => navigate('/messages')}>
+            Open Chat Module
+          </Button>
+        </Card>
+      )}
+
+      {/* Notifications Section */}
+      {tab.startsWith('notifications') && (
+        <Card className="p-12 text-center border-dashed">
+          <div className="w-16 h-16 bg-amber-50 dark:bg-amber-900/30 rounded-full flex items-center justify-center text-amber-600 dark:text-amber-400 mx-auto mb-4">
+            <Bell size={32} />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Notification Center</h3>
+          <p className="text-gray-500 mt-2 max-w-md mx-auto">
+            {tab === 'notifications_create' ? "Configure and broadcast system-wide notifications to all taskers." : "View all system logs and automated alerts sent to users."}
+          </p>
+          <Button className="mt-6" variant="outline">
+            Refresh Notifications
+          </Button>
+        </Card>
+      )}
+
+      {/* Settings Section */}
+      {tab.startsWith('settings') && (
+        <Card className="p-12 text-center border-dashed">
+          <div className="w-16 h-16 bg-gray-50 dark:bg-gray-900/30 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-400 mx-auto mb-4">
+            <Settings size={32} />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">System Configuration</h3>
+          <p className="text-gray-500 mt-2 max-w-md mx-auto">
+            Manage platform rules, security protocols, and administrative access levels.
+          </p>
+          <div className="flex gap-4 justify-center mt-8">
+            <Button variant="outline">Security Audit</Button>
+            <Button>Save Changes</Button>
           </div>
         </Card>
       )}

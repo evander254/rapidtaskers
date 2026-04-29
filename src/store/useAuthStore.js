@@ -16,11 +16,19 @@ export const useAuthStore = create((set) => ({
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session?.user) {
-        const { data: profile } = await supabase
+        let { data: profile } = await supabase
           .from('profiles')
-          .select('*')
+          .select('*, wallets(balance_available, balance_pending)')
           .eq('id', session.user.id)
           .single();
+          
+        if (profile?.wallets) {
+          const walletData = Array.isArray(profile.wallets) ? profile.wallets[0] : profile.wallets;
+          if (walletData) {
+            profile.balance_available = walletData.balance_available || 0;
+            profile.balance_pending = walletData.balance_pending || 0;
+          }
+        }
         set({ user: session.user, profile, loading: false });
       } else {
         set({ user: null, profile: null, loading: false });
@@ -33,11 +41,19 @@ export const useAuthStore = create((set) => ({
     // 2. Set up listener for future changes
     supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
-        const { data: profile } = await supabase
+        let { data: profile } = await supabase
           .from('profiles')
-          .select('*')
+          .select('*, wallets(balance_available, balance_pending)')
           .eq('id', session.user.id)
           .single();
+          
+        if (profile?.wallets) {
+          const walletData = Array.isArray(profile.wallets) ? profile.wallets[0] : profile.wallets;
+          if (walletData) {
+            profile.balance_available = walletData.balance_available || 0;
+            profile.balance_pending = walletData.balance_pending || 0;
+          }
+        }
         set({ user: session.user, profile, loading: false });
       } else {
         set({ user: null, profile: null, loading: false });
@@ -96,13 +112,16 @@ export const useAuthStore = create((set) => ({
     
     if (data.user) {
       // Log login (anti-multi account)
-      // Note: IP address is typically handled server-side in Supabase (e.g., via Edge Functions or Triggers),
-      // but we can log user agent here for basic tracking.
       try {
+        let fp = localStorage.getItem('rt_device_fp');
+        if (!fp) {
+          fp = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
+          localStorage.setItem('rt_device_fp', fp);
+        }
         await supabase.from('login_logs').insert({
           user_id: data.user.id,
-          user_agent: navigator.userAgent
-          // ip_address would ideally be captured by a DB trigger on insertion or via a function
+          user_agent: navigator.userAgent,
+          device_fingerprint: fp
         });
       } catch (logError) {
         console.error('Error logging login:', logError);

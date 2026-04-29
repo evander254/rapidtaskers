@@ -40,7 +40,7 @@ function Dashboard() {
     const { count: ongoingCount } = await supabase
       .from('tasks').select('*', { count: 'exact', head: true })
       .eq('assigned_to', profile.id)
-      .or('status.eq.assigned,status.eq.correction');
+      .or('status.eq.assigned,status.eq.correction,status.eq.awaiting_review');
 
     const { data: tasks } = await supabase
       .from('tasks').select('*').eq('status', 'open')
@@ -159,7 +159,7 @@ function Dashboard() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <div className="flex justify-between items-end">
             <div>
@@ -208,47 +208,6 @@ function Dashboard() {
                 </Card>
               ))
             )}
-          </div>
-        </div>
-
-        <div className="lg:col-span-1 space-y-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Quick Actions</h2>
-          
-          <Card className="p-6">
-             <span className="text-sm font-medium text-gray-500">Total Lifetime Earnings</span>
-             <div className="text-3xl font-bold text-gray-900 dark:text-white mt-1 mb-6">${stats.totalEarned.toFixed(2)}</div>
-             <div className="space-y-3">
-               <Button as={Link} to="/wallet" wFull>
-                 Request Payout
-               </Button>
-               <Button as={Link} to="/my-tasks" variant="outline" wFull>
-                 My Workspace
-               </Button>
-             </div>
-          </Card>
-
-          <div className="space-y-3">
-             {profile?.role === 'admin' && (
-               <Card as={Link} to="/admin" className="p-4 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer block">
-                <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                  <Shield size={20} />
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900 dark:text-white">Client Hub</h4>
-                  <p className="text-xs text-gray-500 mt-0.5">Administrative Controls</p>
-                </div>
-              </Card>
-             )}
-             
-             <Card as={Link} to="/profile" className="p-4 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer block">
-                <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center text-gray-600 dark:text-gray-400">
-                  <Activity size={20} />
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900 dark:text-white">Freelancer Profile</h4>
-                  <p className="text-xs text-gray-500 mt-0.5">View Performance</p>
-                </div>
-              </Card>
           </div>
         </div>
       </div>

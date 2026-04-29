@@ -5,6 +5,7 @@ import { useToast } from './Toast';
 import { LogOut, User, ChevronDown, Rocket, Sun, Moon, Wallet, Bell } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import Button from './ui/Button';
+import NotificationsDropdown from './NotificationsDropdown';
 
 function Navbar() {
   const { user, profile, signOut } = useAuthStore();
@@ -56,10 +57,7 @@ function Navbar() {
           {user ? (
             <>
               {/* Notification Toggle */}
-              <button className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors relative">
-                <Bell size={18} />
-                <span className="absolute top-2 right-2 w-2 h-2 bg-indigo-600 rounded-full border border-white dark:border-gray-900"></span>
-              </button>
+              <NotificationsDropdown />
 
               {/* Balance (Desktop & Mobile) */}
               <Link to="/wallet" className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">

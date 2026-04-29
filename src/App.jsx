@@ -18,6 +18,7 @@ import MyTasks from './pages/MyTasks';
 import AdminPanel from './pages/AdminPanel';
 import Profile from './pages/Profile';
 import Wallet from './pages/Wallet';
+import Messages from './pages/Messages';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import { supabase } from './services/supabase';
@@ -46,7 +47,7 @@ function App() {
         <div className="flex flex-col items-center gap-6">
           <div className="w-16 h-16 border-4 border-indigo-600/10 border-t-indigo-600 rounded-full animate-spin shadow-2xl shadow-indigo-600/20"></div>
           <div className="space-y-1 text-center">
-            <p className="text-sm text-gray-900 dark:text-gray-100 font-semibold uppercase tracking-[0.3em] animate-pulse">Loading Application</p>
+            <p className="text-sm text-gray-900 dark:text-gray-100 font-semibold uppercase tracking-[0.3em] animate-pulse">RapidTaskers</p>
             <p className="text-[10px] text-gray-500 font-medium uppercase tracking-widest opacity-80">Please wait...</p>
           </div>
         </div>
@@ -71,6 +72,7 @@ function App() {
             <Route path="/tasks" element={profile?.status === 'approved' ? <Tasks /> : <Navigate to="/dashboard" />} />
             <Route path="/my-tasks" element={<MyTasks />} />
             <Route path="/wallet" element={<Wallet />} />
+            <Route path="/messages" element={<Messages />} />
             <Route path="/admin" element={profile?.role === 'admin' ? <AdminPanel /> : <Navigate to="/dashboard" />} />
             <Route path="/profile" element={<Profile />} />
           </Route>
