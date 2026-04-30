@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS public.notifications (
   message text,
   type text CHECK (type = ANY (ARRAY['task'::text, 'payout'::text, 'system'::text, 'warning'::text])),
   read boolean DEFAULT false,
+  reference_id uuid,
   created_at timestamp without time zone DEFAULT now(),
   CONSTRAINT notifications_pkey PRIMARY KEY (id),
   CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
@@ -173,3 +174,22 @@ BEGIN
     ALTER TABLE public.submissions ADD COLUMN admin_feedback text;
 EXCEPTION WHEN duplicate_column THEN NULL;
 END $$;
+
+-- ==========================================
+-- 8. SECURITY POLICIES (RLS)
+-- ==========================================
+
+-- Enable RLS on notifications
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+
+-- Allow users to see their own notifications
+DROP POLICY IF EXISTS "Users can view their own notifications" ON public.notifications;
+CREATE POLICY "Users can view their own notifications" ON public.notifications
+    FOR SELECT
+    USING (auth.uid() = user_id);
+
+-- Allow users to update their own notifications (mark as read)
+DROP POLICY IF EXISTS "Users can update their own notifications" ON public.notifications;
+CREATE POLICY "Users can update their own notifications" ON public.notifications
+    FOR UPDATE
+    USING (auth.uid() = user_id);

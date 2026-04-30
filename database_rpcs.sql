@@ -352,12 +352,13 @@ BEGIN
     SELECT full_name INTO v_sender_name FROM public.profiles WHERE id = new.sender_id;
 
     IF v_recipient_id IS NOT NULL THEN
-        INSERT INTO public.notifications (user_id, title, message, type)
+        INSERT INTO public.notifications (user_id, title, message, type, reference_id)
         VALUES (
             v_recipient_id, 
             'New Message', 
             COALESCE(v_sender_name, 'Someone') || ': ' || LEFT(new.message, 50), 
-            'system'
+            'system',
+            new.id
         );
     END IF;
 
@@ -395,3 +396,53 @@ CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON public.messages(conve
 CREATE INDEX IF NOT EXISTS idx_conversation_participants_user_id ON public.conversation_participants(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id_read ON public.notifications(user_id, read);
 
+-- 9. Broadcast Notification (RPC)
+CREATE OR REPLACE FUNCTION public.broadcast_notification(p_title text, p_message text, p_type text)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    INSERT INTO public.notifications (user_id, title, message, type)
+    SELECT id, p_title, p_message, p_type
+    FROM public.profiles;
+END;
+$$;
+-- 10. Get Taskers with Stats (RPC)
+CREATE OR REPLACE FUNCTION public.get_taskers_with_stats(p_filter text)
+RETURNS TABLE (
+    id uuid,
+    full_name text,
+    email text,
+    status text,
+    created_at timestamptz,
+    claimed_count bigint,
+    completed_count bigint,
+    canceled_count bigint
+) 
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        p.id,
+        p.full_name,
+        u.email::text,
+        p.status,
+        p.created_at,
+        (SELECT COUNT(*) FROM public.tasks t WHERE t.assigned_to = p.id AND t.status = 'assigned') as claimed_count,
+        (SELECT COUNT(*) FROM public.tasks t WHERE t.assigned_to = p.id AND t.status = 'completed') as completed_count,
+        (SELECT COUNT(*) FROM public.tasks t WHERE t.assigned_to = p.id AND t.status = 'rejected') as canceled_count
+    FROM public.profiles p
+    JOIN auth.users u ON u.id = p.id
+    WHERE p.role = 'tasker'
+      AND (
+          p_filter = 'all' OR 
+          (p_filter = 'approved' AND p.status = 'approved') OR
+          (p_filter = 'pending' AND p.status = 'pending')
+      )
+    ORDER BY p.created_at DESC;
+END;
+$$;

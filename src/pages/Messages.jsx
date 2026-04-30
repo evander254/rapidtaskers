@@ -9,7 +9,7 @@ function Messages() {
   const { user, profile } = useAuthStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const targetUserId = searchParams.get('userId');
-  
+
   const [conversations, setConversations] = useState([]);
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -28,7 +28,7 @@ function Messages() {
       if (isAdmin) {
         await fetchAdminConversations();
         await fetchTaskersList();
-        
+
         if (targetUserId) {
           // Check if we already have a conversation with this user
           const existing = conversations.find(c => c.otherUser?.id === targetUserId);
@@ -40,22 +40,22 @@ function Messages() {
               .from('conversation_participants')
               .select('conversation_id')
               .eq('user_id', targetUserId);
-            
+
             if (participations && participations.length > 0) {
-               // Find if any of these conversations also have the current user
-               const convIds = participations.map(p => p.conversation_id);
-               const { data: myParticipations } = await supabase
-                 .from('conversation_participants')
-                 .select('conversation_id')
-                 .eq('user_id', user.id)
-                 .in('conversation_id', convIds);
-               
-               if (myParticipations && myParticipations.length > 0) {
-                 setActiveConversationId(myParticipations[0].conversation_id);
-                 fetchAdminConversations(); // Refresh list to show it
-               } else {
-                 startConversationWithTasker(targetUserId);
-               }
+              // Find if any of these conversations also have the current user
+              const convIds = participations.map(p => p.conversation_id);
+              const { data: myParticipations } = await supabase
+                .from('conversation_participants')
+                .select('conversation_id')
+                .eq('user_id', user.id)
+                .in('conversation_id', convIds);
+
+              if (myParticipations && myParticipations.length > 0) {
+                setActiveConversationId(myParticipations[0].conversation_id);
+                fetchAdminConversations(); // Refresh list to show it
+              } else {
+                startConversationWithTasker(targetUserId);
+              }
             } else {
               startConversationWithTasker(targetUserId);
             }
@@ -65,8 +65,22 @@ function Messages() {
         await fetchTaskerConversation();
       }
     };
-    
+
     initializeChat();
+
+    // Subscribe to new conversations for Admin
+    if (isAdmin) {
+      const channel = supabase
+        .channel('admin_conversations')
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'conversations' },
+          () => fetchAdminConversations()
+        )
+        .subscribe();
+
+      return () => supabase.removeChannel(channel);
+    }
   }, [user, isAdmin, targetUserId]);
 
   useEffect(() => {
@@ -87,7 +101,7 @@ function Messages() {
           (payload) => {
             setMessages((prev) => [...prev, payload.new]);
             if (payload.new.sender_id !== user.id) {
-               markAsRead(payload.new.id);
+              markAsRead(payload.new.id);
             }
           }
         )
@@ -253,11 +267,13 @@ function Messages() {
 
       if (error) throw error;
       setMessages(data || []);
-      
+
       // Mark unread messages as read
       const unreadIds = data.filter(m => !m.read && m.sender_id !== user.id).map(m => m.id);
       if (unreadIds.length > 0) {
         await supabase.from('messages').update({ read: true }).in('id', unreadIds);
+        // Also mark corresponding notifications as read
+        await supabase.from('notifications').update({ read: true }).in('reference_id', unreadIds).eq('user_id', user.id);
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -266,6 +282,7 @@ function Messages() {
 
   const markAsRead = async (msgId) => {
     await supabase.from('messages').update({ read: true }).eq('id', msgId);
+    await supabase.from('notifications').update({ read: true }).eq('reference_id', msgId).eq('user_id', user.id);
   };
 
   const sendMessage = async (e) => {
@@ -319,22 +336,22 @@ function Messages() {
               <span className="font-semibold text-gray-900 dark:text-white">
                 {showNewChat ? 'New Message' : 'Conversations'}
               </span>
-              <button 
+              <button
                 onClick={() => setShowNewChat(!showNewChat)}
                 className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors"
               >
                 {showNewChat ? <X size={18} /> : <Plus size={18} />}
               </button>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto no-scrollbar">
               {showNewChat ? (
                 <div className="flex flex-col h-full">
                   <div className="p-3 border-b border-gray-200 dark:border-gray-800">
                     <div className="relative">
                       <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         placeholder="Search taskers..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -346,21 +363,21 @@ function Messages() {
                     {taskersList
                       .filter(t => t.full_name?.toLowerCase().includes(searchQuery.toLowerCase()))
                       .map((tasker) => (
-                      <li 
-                        key={tasker.id}
-                        onClick={() => startConversationWithTasker(tasker.id)}
-                        className="p-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-3"
-                      >
-                        <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                          <User size={18} />
-                        </div>
-                        <div className="flex-1 truncate">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                            {tasker.full_name || 'Unknown Tasker'}
-                          </p>
-                        </div>
-                      </li>
-                    ))}
+                        <li
+                          key={tasker.id}
+                          onClick={() => startConversationWithTasker(tasker.id)}
+                          className="p-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-3"
+                        >
+                          <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                            <User size={18} />
+                          </div>
+                          <div className="flex-1 truncate">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                              {tasker.full_name || 'Unknown Tasker'}
+                            </p>
+                          </div>
+                        </li>
+                      ))}
                     {taskersList.filter(t => t.full_name?.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
                       <li className="p-4 text-sm text-gray-500 text-center">No taskers found.</li>
                     )}
@@ -372,14 +389,13 @@ function Messages() {
                 ) : (
                   <ul className="divide-y divide-gray-200 dark:divide-gray-800">
                     {conversations.map((conv) => (
-                      <li 
+                      <li
                         key={conv.id}
                         onClick={() => setActiveConversationId(conv.id)}
-                        className={`p-4 cursor-pointer transition-colors flex items-center gap-3 ${
-                          activeConversationId === conv.id 
-                            ? 'bg-indigo-50 dark:bg-indigo-900/20 border-l-4 border-indigo-600' 
+                        className={`p-4 cursor-pointer transition-colors flex items-center gap-3 ${activeConversationId === conv.id
+                            ? 'bg-indigo-50 dark:bg-indigo-900/20 border-l-4 border-indigo-600'
                             : 'hover:bg-gray-100 dark:hover:bg-gray-800 border-l-4 border-transparent'
-                        }`}
+                          }`}
                       >
                         <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300">
                           <User size={18} />
@@ -409,8 +425,8 @@ function Messages() {
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900 dark:text-white">
-                    {isAdmin 
-                      ? conversations.find(c => c.id === activeConversationId)?.otherUser?.full_name 
+                    {isAdmin
+                      ? conversations.find(c => c.id === activeConversationId)?.otherUser?.full_name
                       : 'Support Admin'}
                   </p>
                   <p className="text-xs text-green-500 font-medium">Online</p>
@@ -428,11 +444,10 @@ function Messages() {
                     const isMine = msg.sender_id === user.id;
                     return (
                       <div key={msg.id} className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
-                        <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl ${
-                          isMine 
-                            ? 'bg-indigo-600 text-white rounded-br-sm' 
+                        <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl ${isMine
+                            ? 'bg-indigo-600 text-white rounded-br-sm'
                             : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-bl-sm'
-                        }`}>
+                          }`}>
                           <p className="text-sm break-words">{msg.message}</p>
                         </div>
                         <span className="text-[10px] text-gray-400 mt-1 px-1">

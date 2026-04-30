@@ -20,9 +20,9 @@ function Tasks() {
   const [filterType, setFilterType] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => { 
-    fetchTasks(); 
-    
+  useEffect(() => {
+    fetchTasks();
+
     // Live System: Real-time updates for tasks
     const channel = supabase
       .channel('tasks-realtime')
@@ -49,7 +49,7 @@ function Tasks() {
       .select('*, bids(count)')
       .eq('status', 'open')
       .order('created_at', { ascending: false });
-    
+
     if (error) {
       toast.error(error.message, 'Connection Error');
     } else if (data) {
@@ -66,7 +66,7 @@ function Tasks() {
       .select('*, profiles(full_name)')
       .eq('task_id', taskId)
       .order('created_at', { ascending: false });
-    
+
     if (error) toast.error(error.message, 'Bid Sync Error');
     else setSelectedTaskBids(data || []);
     setLoadingBids(false);
@@ -109,17 +109,17 @@ function Tasks() {
       task_id: taskId, user_id: profile.id, bid_amount: amount, message: 'Institutional quality delivery guaranteed.'
     });
     if (error) toast.error(error.message, 'Bid Rejected');
-    else { 
-      toast.success('Proposal Sent', 'Your bid has been submitted for review.'); 
-      setBidAmount(prev => ({...prev, [taskId]: ''}));
+    else {
+      toast.success('Proposal Sent', 'Your bid has been submitted for review.');
+      setBidAmount(prev => ({ ...prev, [taskId]: '' }));
       setSelectedTask(null);
     }
   };
 
   const filteredTasks = tasks.filter(t => {
     const matchesFilter = filterType === 'all' || t.task_type === filterType;
-    const matchesSearch = (t.title?.toLowerCase().includes(searchQuery.toLowerCase()) || false) || 
-                         (t.description?.toLowerCase().includes(searchQuery.toLowerCase()) || false);
+    const matchesSearch = (t.title?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+      (t.description?.toLowerCase().includes(searchQuery.toLowerCase()) || false);
     return matchesFilter && matchesSearch;
   });
 
@@ -131,13 +131,13 @@ function Tasks() {
           <h1 className="text-3xl font-semibold text-gray-900 dark:text-white tracking-tight">Available Tasks</h1>
           <p className="text-gray-500 mt-1">Browse and accept projects from top clients in real-time.</p>
         </div>
-        <Button 
-          onClick={fetchTasks} 
+        <Button
+          onClick={fetchTasks}
           variant="outline"
           disabled={loading}
           className="flex items-center gap-2"
         >
-          <RefreshCcw size={16} className={`${loading ? 'animate-spin' : ''}`} /> 
+          <RefreshCcw size={16} className={`${loading ? 'animate-spin' : ''}`} />
           Refresh List
         </Button>
       </div>
@@ -146,16 +146,16 @@ function Tasks() {
       <Card className="p-2 flex flex-col md:flex-row gap-2">
         <div className="relative flex-1">
           <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input 
-            type="text" 
-            placeholder="Search active protocols..." 
+          <input
+            type="text"
+            placeholder="Search active protocols..."
             className="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-gray-900 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-shadow outline-none text-gray-900 dark:text-white"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
         <div className="flex gap-2">
-          <select 
+          <select
             className="md:w-48 px-4 py-3 bg-gray-50 dark:bg-gray-900 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-shadow outline-none text-gray-900 dark:text-white"
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
@@ -175,7 +175,7 @@ function Tasks() {
         {loading && tasks.length === 0 ? (
           [1, 2, 3, 4].map(i => (
             <Card key={i} className="h-32 animate-pulse flex items-center justify-center border-dashed">
-               <Zap className="text-gray-300 dark:text-gray-700" size={32} />
+              <Zap className="text-gray-300 dark:text-gray-700" size={32} />
             </Card>
           ))
         ) : filteredTasks.length === 0 ? (
@@ -190,11 +190,10 @@ function Tasks() {
           filteredTasks.map((task) => (
             <Card key={task.id} className="p-6 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 hover:border-indigo-500/30 transition-colors group cursor-pointer" onClick={() => setSelectedTask(task)}>
               <div className="flex items-start gap-5 flex-1 min-w-0">
-                <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ${
-                  task.task_type === 'auto' 
-                  ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' 
-                  : 'bg-gray-900 dark:bg-gray-50 text-white dark:text-gray-900'
-                }`}>
+                <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ${task.task_type === 'auto'
+                    ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+                    : 'bg-gray-900 dark:bg-gray-50 text-white dark:text-gray-900'
+                  }`}>
                   {task.task_type === 'auto' ? <Zap size={24} /> : <Gavel size={24} />}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -216,7 +215,7 @@ function Tasks() {
                   </div>
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-1 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{task.title}</h3>
                   <p className="text-gray-500 text-sm line-clamp-1 mb-4">{task.description}</p>
-                  
+
                   <div className="flex flex-wrap gap-4 items-center">
                     <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
                       <Clock size={14} className="text-indigo-600 dark:text-indigo-400" /> {task.time_limit}m Window
@@ -239,7 +238,7 @@ function Tasks() {
                     <DollarSign size={20} />
                     ${task.reward.toFixed(2)}
                   </div>
-                  <Button 
+                  <Button
                     onClick={() => setSelectedTask(task)}
                     className={`w-full lg:w-48 flex items-center justify-center gap-2 ${task.task_type === 'auto' ? 'bg-indigo-600' : 'bg-gray-900'}`}
                   >
@@ -283,7 +282,7 @@ function Tasks() {
                 </Badge>
               </div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{selectedTask.title}</h2>
-              
+
               <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
                 <div className="space-y-1">
                   <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Asset Yield</p>
@@ -320,7 +319,7 @@ function Tasks() {
                 <div className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed whitespace-pre-wrap bg-gray-50 dark:bg-gray-900/30 rounded-xl p-5 border border-gray-100 dark:border-gray-800">
                   {selectedTask.description.split('Deliverables:')[0]}
                 </div>
-                
+
                 {selectedTask.description.includes('Deliverables:') && (
                   <div className="mt-4 space-y-3">
                     <h4 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2 text-sm uppercase tracking-wider opacity-80">
@@ -347,8 +346,8 @@ function Tasks() {
                       <strong>Deployment Notice:</strong> By accepting this project, you commit to delivery within the {selectedTask.time_limit} minute execution window. Late submissions may result in asset forfeiture.
                     </p>
                   </div>
-                  <Button 
-                    onClick={() => claimAutoTask(selectedTask.id)} 
+                  <Button
+                    onClick={() => claimAutoTask(selectedTask.id)}
                     className="w-full py-4 text-lg flex items-center justify-center gap-2"
                   >
                     Accept Project <ArrowRight size={20} />
@@ -361,7 +360,7 @@ function Tasks() {
                     <h4 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2 text-xs uppercase tracking-wider opacity-70 mb-4">
                       Active Proposals ({selectedTaskBids.length})
                     </h4>
-                    
+
                     {loadingBids ? (
                       <div className="flex flex-col items-center py-4 gap-2">
                         <div className="w-5 h-5 border-2 border-indigo-600/20 border-t-indigo-600 rounded-full animate-spin"></div>
@@ -393,16 +392,16 @@ function Tasks() {
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                           <DollarSign size={18} />
                         </div>
-                        <input 
-                          type="number" 
-                          className="w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-gray-900 dark:text-white" 
-                          placeholder="Your Bid Amount" 
-                          value={bidAmount[selectedTask.id] || ''} 
-                          onChange={e => setBidAmount(prev => ({...prev, [selectedTask.id]: e.target.value}))} 
+                        <input
+                          type="number"
+                          className="w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-gray-900 dark:text-white"
+                          placeholder="Your Bid Amount"
+                          value={bidAmount[selectedTask.id] || ''}
+                          onChange={e => setBidAmount(prev => ({ ...prev, [selectedTask.id]: e.target.value }))}
                         />
                       </div>
-                      <Button 
-                        onClick={() => submitBid(selectedTask.id)} 
+                      <Button
+                        onClick={() => submitBid(selectedTask.id)}
                         className="px-8"
                       >
                         Submit Bid

@@ -47,11 +47,11 @@ function Sidebar() {
     {
       name: 'Freelancers',
       icon: <Users size={20} />,
-      path: '/admin?tab=users',
+      path: '/admin?tab=users_all',
       subItems: [
-        { name: 'All Taskers', path: '/admin?tab=users&filter=all', icon: <Users size={16} /> },
-        { name: 'Approved Taskers', path: '/admin?tab=users&filter=approved', icon: <UserCheck size={16} /> },
-        { name: 'Approve Taskers', path: '/admin?tab=users', icon: <UserPlus size={16} /> },
+        { name: 'All Taskers', path: '/admin?tab=users_all', icon: <Users size={16} /> },
+        { name: 'Approved Taskers', path: '/admin?tab=users_approved', icon: <UserCheck size={16} /> },
+        { name: 'Approve Taskers', path: '/admin?tab=users_pending', icon: <UserPlus size={16} /> },
       ]
     },
     {
